@@ -109,6 +109,11 @@ char passwordCharArray[2]; // Password in char array form
 long passwordLong; // Password in long integer form (32 bits)
 short passwordShort; // Password in short integer form (16 bits)
 
+// Variables for converting to PRONTO HEX
+short mask;
+short masked_passwordShort;
+short theBit;
+
 bool loadVarsFromEEPROM()
 {
   // Get lock status (stored in address 0)
@@ -132,6 +137,76 @@ bool loadVarsFromEEPROM()
     // Return true, since everything (hopefully) went okay
     return true;
   }
+}
+
+void generateIrplusFile()
+{
+  Serial.println("An irplus file will be generated.");
+  Serial.println("Copy and paste the output below into a text editor, save it as irlock.irplus, and import it on any Android device with the irplus app installed.");
+  Serial.println("Generating. Please wait...");
+  // Print two empty lines
+  Serial.println("");
+  Serial.println("");
+
+  // Print irplus header
+  Serial.println("<irplus>");
+  // Placing a backslash before the quote mark makes it print as part of the message. (The backslash is not printed.)
+  Serial.println("<device manufacturer=\"(Various)\" model=\"irlock-v0.2\" columns=\"1\" format=\"PRONTO_HEX\">");
+
+  // Print <button> tag (notice this is not println()!)
+  Serial.print("<button label=\"lock/unlock\">");
+
+  // Print the first four PRONTO words (these are basically metadata---first one = raw code, second one = carrier frequency---not kHz, based on PRONTO hardware timers or something,
+  // third one = number of "burst pairs" in sequence 1---16 in this case, because 16 bit number being sent, fourth one = number of burst pairs in sequence 2---none in this case
+  Serial.print("0000 0067 0010 0000 ");
+  // Print the next two PRONTO words (these are the (Sony) initiation pulse and won't change)
+  Serial.print("0060 0018 ");
+  
+  // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero
+  for (int i = 0; i < 16; i++)
+  {
+    // Create a mask to apply to passwordShort, basically moving the the binary "1" at the end of the int "i" positions to the left
+    mask = 1 << i;
+    // "Mask" passwordShort in an AND operation, that is, anywhere where mask has a zero, passwordShort will also have a zero, and anywhere where mask has a 1, passwordShort stays the same. Since mask only has one one,
+    // only one position will be guarenteed to be the same as passwordShort. passwordShort will not change in value itself.
+    masked_passwordShort = passwordShort & mask;
+    // Move the bit that was extracted from passwordShort down to the end so that we can tell if it's a one or a zero
+    theBit = masked_passwordShort >> i;
+    // We have the bit! If it's a one, then theBit will equal 1, if it's a zero, theBit will equal 0!
+
+    // If the bit is a 1, send a (Sony) PRONTO 1
+    if (theBit == 1)
+    {
+      Serial.print("0030 0018");
+      // A space following the number is only needed when not on the last number
+      if (i != 15)
+      {
+        Serial.print(" ");
+      }
+    }
+    // Otherwise, send a (Sony) PRONTO 0
+    else
+    {
+      Serial.print("0018 0018");
+      // A space following the number is only needed when not on the last number
+      if (i != 15)
+      {
+        Serial.print(" ");
+      }
+    }
+  }
+
+  // Print the closing <button> tag
+  Serial.println("</button>");
+  
+  // Print closing irplus and device tags
+  Serial.println("</device>");
+  Serial.println("</irplus>");
+
+  // Print two empty lines
+  Serial.println("");
+  Serial.println("");
+  Serial.println("Generating complete.");
 }
 
 bool programPasswordAndStatus()
@@ -255,14 +330,34 @@ bool programPasswordAndStatus()
   EEPROM.put(1, password);
   // Inform the user that the writing is done
   Serial.println("Done!");
+  // Inform the user that the password is being converted
+  Serial.print("Converting password format... ");
+  // Reload variables from EEPROM, to convert password to integer form for use with IR receiver and LED
+  loadVarsFromEEPROM();
+  // Inform the user that convertion is done
+  Serial.println("Done!");
+  
+  // Ask if the user would like to generate a file for irplus app
+  Serial.println("Would you like to have a file generated for use with the irplus app on phones without an IR receiver? [y/n]");
+  // Wait for a response
+  while (!Serial.available())
+  {
+  }
+  // ASCII character "y" is equivalent to the decimal number 121.
+  if (Serial.read() == 121)
+  {
+    generateIrplusFile();
+  }
+  // Otherwise...
+  else
+  {
+    Serial.println("An irplus file will not be generated.");
+  }
   
   Serial.println("Programming successful!");
   Serial.println("Closing serial connection...");
   // Close serial connection
   Serial.end();
-  
-  // Reload variables from EEPROM, to convert password to integer form for use with IR receiver and LED
-  loadVarsFromEEPROM();
   
   // Return true, since everything (hopefully) worked
   return true;
