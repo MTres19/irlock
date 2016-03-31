@@ -162,8 +162,8 @@ void generateIrplusFile()
   // Print the next two PRONTO words (these are the (Sony) initiation pulse and won't change)
   Serial.print("0060 0018 ");
   
-  // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero
-  for (int i = 15; i >= 0; i--)
+  // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero. Note that despite official Sony spec being little endian, Ken Shirriff's library uses big endian.
+  for (int i = 0; i < 16; i++)
   {
     // Create a mask to apply to passwordShort, basically moving the the binary "1" at the end of the int "i" positions to the left
     mask = 1 << i;
@@ -179,7 +179,7 @@ void generateIrplusFile()
     {
       Serial.print("0030 0018");
       // A space following the number is only needed when not on the last number
-      if (i != 0)
+      if (i != 15)
       {
         Serial.print(" ");
       }
@@ -189,13 +189,17 @@ void generateIrplusFile()
     {
       Serial.print("0018 0018");
       // A space following the number is only needed when not on the last number
-      if (i != 0)
+      if (i != 15)
       {
         Serial.print(" ");
       }
     }
+    // Interestingly, Sony specification calls for a longer time off at the end of a transmission. However, because this generator does not create a code to be sent when the button is held down, and human reaction time
+    // is probably longer than the amount of time called for in the spec, it is simpler to just omit this.
   }
 
+  // Send a (Sony) PRONTO "lead out" pattern
+  
   // Print the closing <button> tag
   Serial.println("</button>");
   
