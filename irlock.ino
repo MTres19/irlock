@@ -163,7 +163,7 @@ void generateIrplusFile()
   Serial.print("0060 0018 ");
   
   // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero
-  for (int i = 0; i < 16; i++)
+  for (int i = 15; i >= 0; i--)
   {
     // Create a mask to apply to passwordShort, basically moving the the binary "1" at the end of the int "i" positions to the left
     mask = 1 << i;
@@ -179,7 +179,7 @@ void generateIrplusFile()
     {
       Serial.print("0030 0018");
       // A space following the number is only needed when not on the last number
-      if (i != 15)
+      if (i != 0)
       {
         Serial.print(" ");
       }
@@ -189,7 +189,7 @@ void generateIrplusFile()
     {
       Serial.print("0018 0018");
       // A space following the number is only needed when not on the last number
-      if (i != 15)
+      if (i != 0)
       {
         Serial.print(" ");
       }
