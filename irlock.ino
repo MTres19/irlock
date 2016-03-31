@@ -480,6 +480,16 @@ void setup()
     {
     }
   }
+
+  // Make sure the lock is in the proper position
+  if (isLocked == true)
+  {
+    servo.write(lockedPosition);
+  }
+  else
+  {
+    servo.write(unlockedPosition);
+  }
   
   // Start the IR receiver
   detector.enableIRIn();
