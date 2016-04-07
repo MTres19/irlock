@@ -105,9 +105,12 @@ bool isLocked; // Stores whether the door is locked or not
 String password; // Stores the password, better than a char array since it can be easily used with EEPROM.put().
 int lockedPosition = 180; // Position of the servo, in degrees, when the door is locked. Change as circumstances warrent.
 int unlockedPosition = 90; // Position of the servo, in degrees, when the door is unlocked. Change as circumstances warrent.
-char passwordCharArray[2]; // Password in char array form
-long passwordLong; // Password in long integer form (32 bits)
-short passwordShort; // Password in short integer form (16 bits)
+
+// Variables for converting password to integer datatype---note that using short makes the number 16 bits, maintaining compatability with Arduino Due
+char passwordCharArray[2];
+short firstChar;
+short secondChar;
+short passwordShort;
 
 // Variables for converting to PRONTO HEX
 short mask;
@@ -128,11 +131,14 @@ bool loadVarsFromEEPROM()
   else
   {
     // Convert the String password to the char array
-    password.toCharArray(passwordCharArray, sizeof(passwordCharArray));
-    // Convert char array to long type
-    passwordLong = atol(passwordCharArray);
-    // Convert passwordLong to a short int
-    passwordShort = passwordLong;
+    password.toCharArray(passwordCharArray, 2);
+    // Convert individual characters to integers
+    firstChar = passwordCharArray[0];
+    secondChar = passwordCharArray[1];
+    
+    // Multiply the integers together to get a number based on the password. It doesn't actually matter if what is used as the password matches
+    // what the user entered byte-wise, since the user doesn't have to enter it.
+    passwordShort = firstChar * secondChar;
 
     // Return true, since everything (hopefully) went okay
     return true;
