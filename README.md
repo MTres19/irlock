@@ -9,7 +9,7 @@ For devices equipped with an infrared **receiver**, irlock can transmit the unlo
 Notices
 -------
 
-* This program is made for the Arduino Uno. The Arduino Nano lacks the neccessary RAM to support this program. Other boards may work as well, however it's not guarenteed. (I can't test it.)
+* I can only test this on the Arduino Uno R3. Other boards should work, but some won't. See [https://github.com/MTres19/irlock/wiki/Flash-irlock-to-Arduino](https://github.com/MTres19/irlock/wiki/Flash-irlock-to-Arduino) for a list of boards that probably won't work.
 
 * Ken Shirriff's IR library must be installed. See [https://github.com/z3t0/Arduino-IRremote/releases](https://github.com/z3t0/Arduino-IRremote/releases) for downloads. Download `Arduino-IRremote-dev.zip`, then in the  Arduino IDE, go to Sketch > Include Library > Add .ZIP Library, and open the ZIP file. If this results in extra `#include` statements being added to the sketch, remove them, as the library is already included.
 

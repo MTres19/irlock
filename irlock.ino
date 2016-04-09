@@ -234,7 +234,7 @@ bool programPasswordAndStatus()
   }
   // Open USB/serial connection
   Serial.begin(9600);
-  // Wait for USB port to connect---needed for Arduino Leondardo only.
+  // Wait for USB port to connect---needed for Arduinos with native USB only
   while (!Serial)
   {
   }
