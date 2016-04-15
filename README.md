@@ -15,7 +15,7 @@ Notices
 
 * You should be using the latest version of the Arduino IDE (v1.6.8 as of this writing).
 
-* The IR LED **must** be connected to Arduino pin 3. No other pin is supported for sending with Ken Shirriff's library.
+* The IR LED **must** be connected to Arduino pin 3 on the Arduino Uno. No other pin is supported for sending with Ken Shirriff's library. However, this may be different with the Arduino Mega.
 
 * You can view the (rather messy) schematic file, irlock.fzz, by downloading and opening it in [Fritzing](http://fritzing.org).
 
