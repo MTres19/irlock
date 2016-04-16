@@ -19,6 +19,8 @@ Notices
 
 * You can view the (rather messy) schematic file, irlock.fzz, by downloading and opening it in [Fritzing](http://fritzing.org).
 
+* Some wiring and pinouts may be different, depending on models of IR sensors. The wiring in the comments of the Arduino sketch and in the Fritzing schematic are for my model.
+
 Releases
 --------
 
