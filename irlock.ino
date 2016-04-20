@@ -85,6 +85,10 @@ Connect the other side of the button to ground.
 #include <IRremote.h>
 #include <EEPROM.h>
 
+// Constants
+#define lockedPosition 180 // Position of the servo, in degrees, when the door is locked. Change as circumstances warrent.
+#define unlockedPosition 90 // Position of the servo, in degrees, when the door is unlocked. Change as circumstances warrent.
+
 // Make LiquidCrystal variable named lcd, identify pins being used
 LiquidCrystal lcd(8, 9, 10, 11, 12, 13);
 
@@ -100,14 +104,11 @@ IRrecv detector(4);
 // Make a decode_results variable named irInput
 decode_results irInput;
 
-// "Normal" Variables
+// Variables
 bool isLocked; // Stores whether the door is locked or not
-String password; // Stores the password, better than a char array since it can be easily used with EEPROM.put().
-int lockedPosition = 180; // Position of the servo, in degrees, when the door is locked. Change as circumstances warrent.
-int unlockedPosition = 90; // Position of the servo, in degrees, when the door is unlocked. Change as circumstances warrent.
 
 // Variables for converting password to integer datatype---note that using short makes the number 16 bits, maintaining compatability with Arduino Due
-char passwordCharArray[2];
+char passwordCharArray[3]; // First two characters will be used for the password, the third holds an auxilary character that could be an unneeded carriage return
 short firstChar;
 short secondChar;
 short passwordShort;
@@ -117,45 +118,46 @@ short mask;
 short masked_passwordShort;
 short theBit;
 
+void convertPassword()
+{
+  // Convert individual characters to integers
+  firstChar = passwordCharArray[0];
+  secondChar = passwordCharArray[1];
+  
+  // Multiply the integers together to get a number based on the password. It doesn't actually matter if what is used as the password matches
+  // what the user entered byte-wise, since the user doesn't have to enter it.
+  passwordShort = firstChar * secondChar;
+}
+
 bool loadVarsFromEEPROM()
 {
   // Get lock status (stored in address 0)
   EEPROM.get(0, isLocked);
   // Get password (stored beginning in address 1)
-  EEPROM.get(1, password);
-  // If the password doesn't match the requirements, it's a pretty good indication that either one was never written or it was overwritten
-  if (password.length() != 2)
+  EEPROM.get(1, passwordShort);
+  
+  // If the password is just a 0, it's a pretty good indication that either one was never written or it was overwritten
+  if (passwordShort = 0)
   {
     return false;
   }
   else
   {
-    // Convert the String password to the char array
-    password.toCharArray(passwordCharArray, 2);
-    // Convert individual characters to integers
-    firstChar = passwordCharArray[0];
-    secondChar = passwordCharArray[1];
-    
-    // Multiply the integers together to get a number based on the password. It doesn't actually matter if what is used as the password matches
-    // what the user entered byte-wise, since the user doesn't have to enter it.
-    passwordShort = firstChar * secondChar;
-
-    // Return true, since everything (hopefully) went okay
     return true;
   }
 }
 
 void generateIrplusFile()
 {
-  Serial.println("An irplus file will be generated.");
-  Serial.println("Copy and paste the output below into a text editor, save it as irlock.irplus, and import it on any Android device with the irplus app installed.");
-  Serial.println("Generating. Please wait...");
+  Serial.println(F("An irplus file will be generated."));
+  Serial.println(F("Copy and paste the output below into a text editor, save it as irlock.irplus, and import it on any Android device with the irplus app installed."));
+  Serial.println(F("Generating. Please wait..."));
   // Print two empty lines
   Serial.println("");
   Serial.println("");
 
   // Print irplus header
-  Serial.println("<irplus>");
+  Serial.println(F("<irplus>"));
   // Placing a backslash before the quote mark makes it print as part of the message. (The backslash is not printed.)
   Serial.println("<device manufacturer=\"(Various)\" model=\"irlock-v0.2\" columns=\"1\" format=\"PRONTO_HEX\">");
 
@@ -164,9 +166,9 @@ void generateIrplusFile()
 
   // Print the first four PRONTO words (these are basically metadata---first one = raw code, second one = carrier frequency---not kHz, based on PRONTO hardware timers or something,
   // third one = number of "burst pairs" in sequence 1---16 in this case, because 16 bit number being sent, fourth one = number of burst pairs in sequence 2---none in this case
-  Serial.print("0000 0067 0010 0000 ");
+  Serial.print(F("0000 0067 0010 0000 "));
   // Print the next two PRONTO words (these are the (Sony) initiation pulse and won't change)
-  Serial.print("0060 0018 ");
+  Serial.print(F("0060 0018 "));
   
   // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero. Note that despite official Sony spec being little endian, Ken Shirriff's library uses big endian.
   for (int i = 0; i < 16; i++)
@@ -183,7 +185,7 @@ void generateIrplusFile()
     // If the bit is a 1, send a (Sony) PRONTO 1
     if (theBit == 1)
     {
-      Serial.print("0030 0018");
+      Serial.print(F("0030 0018"));
       // A space following the number is only needed when not on the last number
       if (i != 15)
       {
@@ -193,7 +195,7 @@ void generateIrplusFile()
     // Otherwise, send a (Sony) PRONTO 0
     else
     {
-      Serial.print("0018 0018");
+      Serial.print(F("0018 0018"));
       // A space following the number is only needed when not on the last number
       if (i != 15)
       {
@@ -203,20 +205,18 @@ void generateIrplusFile()
     // Interestingly, Sony specification calls for a longer time off at the end of a transmission. However, because this generator does not create a code to be sent when the button is held down, and human reaction time
     // is probably longer than the amount of time called for in the spec, it is simpler to just omit this.
   }
-
-  // Send a (Sony) PRONTO "lead out" pattern
   
   // Print the closing <button> tag
-  Serial.println("</button>");
+  Serial.println(F("</button>"));
   
   // Print closing irplus and device tags
-  Serial.println("</device>");
-  Serial.println("</irplus>");
+  Serial.println(F("</device>"));
+  Serial.println(F("</irplus>"));
 
   // Print two empty lines
   Serial.println("");
   Serial.println("");
-  Serial.println("Generating complete.");
+  Serial.println(F("Generating complete."));
 }
 
 bool programPasswordAndStatus()
@@ -227,6 +227,11 @@ bool programPasswordAndStatus()
   lcd.print("Press Prgm when");
   lcd.setCursor(0, 1);
   lcd.print("connected to PC.");
+
+  // Wait for user to release the button
+  while (digitalRead(7) == HIGH)
+  {
+  }
   
   // Wait for button press
   while (digitalRead(7) == LOW)
@@ -247,56 +252,56 @@ bool programPasswordAndStatus()
   lcd.print("Serial Monitor.");
 
   // Announce successful serial connection
-  Serial.println("Serial connection successfully established.");
+  Serial.println(F("Serial connection successfully established."));
 
   // Get lock status
-  Serial.println("Is door in a locked position? [y/n]");
+  Serial.println(F("Is door in a locked position? [y/n]"));
   // Wait for a response
   while (!Serial.available())
   {
   }
   // Wait for entire message to arrive
-  delay(100);
+  delay(200);
   
   // ASCII character "y" is equivalent to the decimal number 121. Use peek() because if using read, it will be erased from the buffer and can't be read by the else if statement next
   if (Serial.peek() == 121)
   {
     isLocked = true;
     // Inform the user that it is being written
-    Serial.print("Writing answer... ");
+    Serial.print(F("Writing answer... "));
     // Write value to EEPROM
     EEPROM.put(0, isLocked);
     // Inform the user that writing is done
-    Serial.println("Done!");
+    Serial.println(F("Done!"));
     // Inform the user that the servo is being positioned
-    Serial.print("Positioning servo... ");
+    Serial.print(F("Positioning servo... "));
     // Move servo to position set by lockedPosition variable
     servo.write(lockedPosition);
     // Inform the user that positioning is done
-    Serial.println("Done!");
+    Serial.println(F("Done!"));
   }
   // ASCII character "n" is equivalent to the decimal number 110.
   else if (Serial.peek() == 110)
   {
     isLocked = false;
     // Inform the user that it is being written
-    Serial.print("Writing answer... ");
+    Serial.print(F("Writing answer... "));
     // Write value to EEPROM
     EEPROM.put(0, isLocked);
     // Inform the user that the writing is done
-    Serial.println("Done!");
+    Serial.println(F("Done!"));
     // Inform the user that the servo is being positioned
-    Serial.print("Positioning servo... ");
+    Serial.print(F("Positioning servo... "));
     // Move servo to position set by unlockedPosition variable
     servo.write(unlockedPosition);
     // Inform the user that positioning is done
-    Serial.println("Done!");
+    Serial.println(F("Done!"));
   }
   // If it wasn't one or the other, then the user entered an invalid character.
   else
   {
-    Serial.println("Sorry. That character is invalid. Please use a lowercase n for no, or lowercase y for yes. Programming will restart from beginning.");
-    Serial.println("Closing serial connection...");
+    Serial.println(F("Sorry. That character is invalid. Please use a lowercase n for no, or lowercase y for yes. Programming will restart from beginning."));
+    Serial.println(F("Closing serial connection..."));
     // Close serial connection
     Serial.end();
     // Exit function
@@ -310,45 +315,46 @@ bool programPasswordAndStatus()
   }
   
   // Get password via Serial
-  Serial.println("Please enter a password. Make sure it is at least three characters.");
+  Serial.println(F("Please enter a password. Make sure it is at least three characters."));
   // Wait for a response
   while (!Serial.available())
   {
   }
   // Wait for entire message to arrive
-  delay(100);
-  
-  // Set String (notice capital S) "password" equal to the output of the String() function, which can create a String Object from a string,
-  // (notice lowercase s) which is actually a character array, which is what we get from Serial.readString
-  password = String(Serial.readString());
+  delay(200);
 
-  // Make sure the password is longer than 2 characters, otherwise substring() could cause issues
-  if (password.length() < 3)
+  // Read password into passwordCharArry
+  for (int i = 0; i < 3; i++)
   {
-    Serial.println("Sorry. That password is not long enough. Programming will restart from beginning.");
-    Serial.println("Closing serial connection...");
+    passwordCharArray[i] = Serial.read();
+  }
+  // Make sure the password is longer than 2 characters, otherwise a carriage return character could sneak in (less possibilities = less secure)
+  if (strlen(passwordCharArray) < 3)
+  {
+    Serial.println(F("Sorry. That password is not long enough. Programming will restart from beginning."));
+    Serial.println(F("Closing serial connection..."));
     // Close serial connection
     Serial.end();
     // Exit function
     return false;
   }
-  // Shorten to just the first two letters (note that 2 is not included), since IR library can't send more than 2 whole bytes
-  password = password.substring(0, 2);
-  // Inform the user that it is being written
-  Serial.print("Writing answer... ");
-  // Write value to EEPROM
-  EEPROM.put(1, password);
-  // Inform the user that the writing is done
-  Serial.println("Done!");
+
   // Inform the user that the password is being converted
-  Serial.print("Converting password format... ");
-  // Reload variables from EEPROM, to convert password to integer form for use with IR receiver and LED
-  loadVarsFromEEPROM();
+  Serial.print(F("Converting password format... "));
+  // Generate an integer based on the password
+  convertPassword();
   // Inform the user that convertion is done
-  Serial.println("Done!");
+  Serial.println(F("Done!"));
+   
+  // Inform the user that it is being written
+  Serial.print(F("Writing answer... "));
+  // Write value to EEPROM
+  EEPROM.put(1, passwordShort);
+  // Inform the user that the writing is done
+  Serial.println(F("Done!"));
   
   // Ask if the user would like to generate a file for irplus app
-  Serial.println("Would you like to have a file generated for use with the irplus app on phones without an IR receiver? [y/n]");
+  Serial.println(F("Would you like to have a file generated for use with the irplus app on phones without an IR receiver? [y/n]"));
   // Wait for a response
   while (!Serial.available())
   {
@@ -361,13 +367,16 @@ bool programPasswordAndStatus()
   // Otherwise...
   else
   {
-    Serial.println("An irplus file will not be generated.");
+    Serial.println(F("An irplus file will not be generated."));
   }
   
-  Serial.println("Programming successful!");
-  Serial.println("Closing serial connection...");
+  Serial.println(F("Programming successful!"));
+  Serial.println(F("Closing serial connection..."));
   // Close serial connection
   Serial.end();
+  
+  // Show the home screen
+  showHomeScreen();
   
   // Return true, since everything (hopefully) worked
   return true;
@@ -380,7 +389,7 @@ void showHomeScreen()
   // Position the cursor at the top left (not really neccessary, since clear() does this already)
   lcd.setCursor(0, 0);
   // Print name and version number
-  lcd.print("irlock v0.1-alpha1");
+  lcd.print("irlock alpha");
   // Position the cursor at the bottom left
   lcd.setCursor(0, 1);
   // If the door is unlocked, print "unlocked", otherwise...
@@ -431,16 +440,15 @@ void calibrateSmartphone()
   lcd.setCursor(0, 0);
   // Print calibration message
   lcd.print("Calibrating...");
+  
   // Send IR password
   irLED.sendSony(passwordShort, 16);
-
+  
   // Clear LCD
   lcd.clear();
   // Set cursor and print success message
   lcd.setCursor(2, 0);
-  lcd.print("Calibration");
-  lcd.setCursor(2, 1);
-  lcd.print("successful.");
+  lcd.print("Code sent.");
   // Show message for a second and a half
   delay(1500);
 
@@ -503,6 +511,9 @@ void setup()
   
   // Start the IR receiver
   detector.enableIRIn();
+
+  // Set the LED pin as an output
+  pinMode(3, OUTPUT);
   
   // Show the home screen
   showHomeScreen();
@@ -535,6 +546,11 @@ void loop()
   // If the lock/unlock button was pressed...
   if (digitalRead(2) == HIGH)
   {
+    // Wait for the user to release the button
+    while (digitalRead(2) == HIGH)
+    {
+    }
+    
     if (isLocked == true)
     {
       unlock();
