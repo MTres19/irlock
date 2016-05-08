@@ -149,14 +149,14 @@ void generateIrplusFile()
   // Print irplus header
   Serial.println(F("<irplus>"));
   // Placing a backslash before the quote mark makes it print as part of the message. (The backslash is not printed.)
-  Serial.println("<device manufacturer=\"(Various)\" model=\"irlock alpha\" columns=\"1\" format=\"PRONTO_HEX\">");
+  Serial.println("<device manufacturer=\"Imagination\" model=\"irlock alpha\" columns=\"1\" format=\"PRONTO_HEX\">");
 
   // Print <button> tag (notice this is not println()!)
   Serial.print("<button label=\"lock/unlock\">");
 
   // Print the first four PRONTO words (these are basically metadata---first one = raw code, second one = carrier frequency---not kHz, based on PRONTO hardware timers or something,
   // third one = number of "burst pairs" in sequence 1---16 in this case, because 16 bit number being sent, fourth one = number of burst pairs in sequence 2---none in this case
-  Serial.print(F("0000 0067 0010 0000 "));
+  Serial.print(F("0000 006D 0010 0000 "));
   // Print the next two PRONTO words (these are the (Sony) initiation pulse and won't change)
   Serial.print(F("0060 0018 "));
   
