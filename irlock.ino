@@ -170,8 +170,10 @@ void generateIrplusFile()
   // Print the next two PRONTO words (these are the (Sony) initiation pulse and won't change)
   Serial.print(F("0060 0018 "));
   
-  // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero. Note that despite official Sony spec being little endian, Ken Shirriff's library uses big endian.
-  for (int i = 0; i < 16; i++)
+  // Cycle through the bits of passwordShort, printing the "1" PRONTO code if it's a one and a "0" PRONTO code if it's a zero.
+  // Note that despite official Sony spec being little endian, Ken Shirriff's library uses big endian.
+  // However, it is not necessary to convert from the Arduino's little endian format to big endian for transmission, since bitwise operations act big-endian.
+  for (int i = 15; i >= 0; i--)
   {
     // Create a mask to apply to passwordShort, basically moving the the binary "1" at the end of the int "i" positions to the left
     mask = 1 << i;
@@ -186,8 +188,8 @@ void generateIrplusFile()
     if (theBit == 1)
     {
       Serial.print(F("0030 0018"));
-      // A space following the number is only needed when not on the last number
-      if (i != 15)
+      // A space following the number is only needed when not on the last bit
+      if (i > 0)
       {
         Serial.print(" ");
       }
@@ -196,8 +198,8 @@ void generateIrplusFile()
     else
     {
       Serial.print(F("0018 0018"));
-      // A space following the number is only needed when not on the last number
-      if (i != 15)
+      // A space following the number is only needed when not on the last bit
+      if (i > 0)
       {
         Serial.print(" ");
       }
@@ -345,7 +347,11 @@ bool programPasswordAndStatus()
   convertPassword();
   // Inform the user that convertion is done
   Serial.println(F("Done!"));
-   
+
+  // DEBUGGING: Print HEX format of password
+  Serial.print(F("The password is: 0x"));
+  Serial.println(passwordShort, HEX);
+  
   // Inform the user that it is being written
   Serial.print(F("Writing answer... "));
   // Write value to EEPROM
