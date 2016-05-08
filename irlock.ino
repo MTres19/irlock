@@ -129,22 +129,12 @@ void convertPassword()
   passwordShort = firstChar * secondChar;
 }
 
-bool loadVarsFromEEPROM()
+void loadVarsFromEEPROM()
 {
   // Get lock status (stored in address 0)
   EEPROM.get(0, isLocked);
   // Get password (stored beginning in address 1)
   EEPROM.get(1, passwordShort);
-  
-  // If the password is just a 0, it's a pretty good indication that either one was never written or it was overwritten
-  if (passwordShort = 0)
-  {
-    return false;
-  }
-  else
-  {
-    return true;
-  }
 }
 
 void generateIrplusFile()
@@ -221,7 +211,7 @@ void generateIrplusFile()
   Serial.println(F("Generating complete."));
 }
 
-bool programPasswordAndStatus()
+void programPasswordAndStatus()
 {
   // Tell the user to connect board to computer
   lcd.clear();
@@ -302,12 +292,12 @@ bool programPasswordAndStatus()
   // If it wasn't one or the other, then the user entered an invalid character.
   else
   {
-    Serial.println(F("Sorry. That character is invalid. Please use a lowercase n for no, or lowercase y for yes. Programming will restart from beginning."));
+    Serial.println(F("Sorry. That character is invalid. Please use a lowercase n for no, or lowercase y for yes. Programming will end."));
     Serial.println(F("Closing serial connection..."));
     // Close serial connection
     Serial.end();
     // Exit function
-    return false;
+    return;
   }
   
   // Clear the Serial buffer, since peek() doesn't empty it, but read() does
@@ -333,12 +323,12 @@ bool programPasswordAndStatus()
   // Make sure the password is longer than 2 characters, otherwise a carriage return character could sneak in (less possibilities = less secure)
   if (strlen(passwordCharArray) < 3)
   {
-    Serial.println(F("Sorry. That password is not long enough. Programming will restart from beginning."));
+    Serial.println(F("Sorry. That password is not long enough. Programming will end."));
     Serial.println(F("Closing serial connection..."));
     // Close serial connection
     Serial.end();
     // Exit function
-    return false;
+    return;
   }
 
   // Inform the user that the password is being converted
@@ -383,9 +373,6 @@ bool programPasswordAndStatus()
   
   // Show the home screen
   showHomeScreen();
-  
-  // Return true, since everything (hopefully) worked
-  return true;
 }
 
 void showHomeScreen()
@@ -496,15 +483,18 @@ void setup()
   // Hide cursor
   lcd.noCursor();
   
-  // Load password and lock setting from EEPROM. If fails, offer to program password.
-  if (loadVarsFromEEPROM() == false)
+  // Load password and lock setting from EEPROM.
+  loadVarsFromEEPROM();
+  
+  // DEBUGGING: Send out the password in hex when starting
+  Serial.begin(9600);
+  while (!Serial)
   {
-    // If programming password and status fails, (i.e. the user didn't answer y or n) then do it again.
-    while (programPasswordAndStatus() == false)
-    {
-    }
   }
-
+  Serial.print(F("The passcode is: 0x"));
+  Serial.println(passwordShort, HEX);
+  Serial.end();
+  
   // Make sure the lock is in the proper position
   if (isLocked == true)
   {
