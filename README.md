@@ -24,7 +24,7 @@ Notices
 Releases
 --------
 
-Currently, there are no releases as I have not tested it.
+An alpha release is available with basic functionality.
 
 Technical Details
 -----------------
