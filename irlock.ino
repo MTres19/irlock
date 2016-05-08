@@ -149,7 +149,7 @@ void generateIrplusFile()
   // Print irplus header
   Serial.println(F("<irplus>"));
   // Placing a backslash before the quote mark makes it print as part of the message. (The backslash is not printed.)
-  Serial.println("<device manufacturer=\"(Various)\" model=\"irlock-v0.2\" columns=\"1\" format=\"PRONTO_HEX\">");
+  Serial.println("<device manufacturer=\"(Various)\" model=\"irlock alpha\" columns=\"1\" format=\"PRONTO_HEX\">");
 
   // Print <button> tag (notice this is not println()!)
   Serial.print("<button label=\"lock/unlock\">");
