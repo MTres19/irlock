@@ -437,6 +437,9 @@ void calibrateSmartphone()
   // Send IR password
   irLED.sendSony(passwordShort, 16);
   
+  // Re-enable the IR receiver after sending (https://github.com/z3t0/Arduino-IRremote/issues/143)
+  detector.enableIRIn();
+  
   // Clear LCD
   lcd.clear();
   // Set cursor and print success message
