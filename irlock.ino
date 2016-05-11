@@ -40,7 +40,7 @@ Servo
 
 Infrared LED
 --------------
-Long Pin: Arduino Digital Pin 3 through 220 Ohm Resistor
+Long Pin: Arduino Digital Pin 3 (Or 9 on Arduino Mega) through 220 Ohm Resistor
 Short Pin: Ground
 
 Infrared Sensor
