@@ -3,7 +3,7 @@
 Infrared unlock---Program lock codes via Serial, save lock code in EEPROM, calibrate phone remote apps via IR LED, and unlock door via IR sensor and servo
 
 This program is designed for Arduino Uno (Revision 3).
-This program was tested with LG's QuickRemote and binarymode's irplus apps on an LG G4. Galaxy S6s don't seem to work, as they lack an IR receiver.
+This program was tested with LG's QuickRemote and binarymode's irplus apps on an LG G4. Galaxy S6s require calibration via irplus file generation, as they lack an IR sensor.
 Pin directions below:
 
 LCD Screen
