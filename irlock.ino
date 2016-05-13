@@ -149,7 +149,7 @@ void generateIrplusFile()
   // Print irplus header
   Serial.println(F("<irplus>"));
   // Placing a backslash before the quote mark makes it print as part of the message. (The backslash is not printed.)
-  Serial.println("<device manufacturer=\"Imagination\" model=\"irlock beta\" columns=\"1\" format=\"PRONTO_HEX\">");
+  Serial.println("<device manufacturer=\"Imagination\" model=\"irlock v1.0\" columns=\"1\" format=\"PRONTO_HEX\">");
 
   // Print <button> tag (notice this is not println()!)
   Serial.print("<button label=\"lock/unlock\">");
@@ -382,7 +382,7 @@ void showHomeScreen()
   // Position the cursor at the top left (not really neccessary, since clear() does this already)
   lcd.setCursor(0, 0);
   // Print name and version number
-  lcd.print("irlock beta");
+  lcd.print("irlock v1.0");
   // Position the cursor at the bottom left
   lcd.setCursor(0, 1);
   // If the door is unlocked, print "unlocked", otherwise...
